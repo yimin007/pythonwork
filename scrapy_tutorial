@@ -1,0 +1,63 @@
+T:\>scrapy startproject tutorial
+
+T:\tutorial>tree /f
+T:.
+│  scrapy.cfg
+│
+└─tutorial
+    │  items.py
+    │  pipelines.py
+    │  settings.py
+    │  __init__.py
+    │
+    └─spiders
+            __init__.py
+            •scrapy.cfg: 项目配置文件
+•tutorial/: 项目python模块, 呆会代码将从这里导入
+•tutorial/items.py: 项目items文件
+•tutorial/pipelines.py: 项目管道文件
+•tutorial/settings.py: 项目配置文件
+•tutorial/spiders: 放置spider的目录
+定义Item
+
+Items是将要装载抓取的数据的容器，它工作方式像python里面的字典，但它提供更多的保护，比如对未定义的字段填充以防止拼写错误。
+
+它通过创建一个scrapy.item.Item类来声明，定义它的属性为scrpy.item.Field对象，就像是一个对象关系映射(ORM). 
+我们通过将需要的item模型化，来控制从dmoz.org获得的站点数据，比如我们要获得站点的名字，url和网站描述，我们定义这三种属性的域。要做到这点，我们编辑在tutorial目录下的items.py文件，我们的Item类将会是这样
+
+from scrapy.item import Item, Field 
+class DmozItem(Item):
+    title = Field()
+    link = Field()
+    desc = Field()
+    
+    Spider是用户编写的类，用于从一个域（或域组）中抓取信息。
+他们定义了用于下载的URL的初步列表，如何跟踪链接，以及如何来解析这些网页的内容用于提取items。
+要建立一个Spider，你必须为scrapy.spider.BaseSpider创建一个子类，并确定三个主要的、强制的属性：
+•name：爬虫的识别名，它必须是唯一的，在不同的爬虫中你必须定义不同的名字.
+•start_urls：爬虫开始爬的一个URL列表。爬虫从这里开始抓取数据，所以，第一次下载的数据将会从这些URLS开始。其他子URL将会从这些起始URL中继承性生成。
+•parse()：爬虫的方法，调用时候传入从每一个URL传回的Response对象作为参数，response将会是parse方法的唯一的一个参数,
+
+这个方法负责解析返回的数据、匹配抓取的数据(解析为item)并跟踪更多的URL。
+
+这是我们的第一只爬虫的代码，将其命名为dmoz_spider.py并保存在tutorial\spiders目录下。
+
+from scrapy.spider import BaseSpider
+
+class DmozSpider(BaseSpider):
+    name = "dmoz"
+    allowed_domains = ["dmoz.org"]
+    start_urls = [
+        "http://www.dmoz.org/Computers/Programming/Languages/Python/Books/",
+        "http://www.dmoz.org/Computers/Programming/Languages/Python/Resources/"
+    ]
+
+    def parse(self, response):
+        filename = response.url.split("/")[-2]
+        open(filename, 'wb').write(response.body)
+
+    为了让我们的爬虫工作，我们返回项目主目录执行以下命令
+
+T:\tutorial>scrapy crawl dmoz
+
+    
